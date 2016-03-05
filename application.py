@@ -65,7 +65,7 @@ def search():
         verify_certs=True,
         connection_class=RequestsHttpConnection
     )
-
+    #didn't quite get geofilter by elasticsearch working, need to add geoindex and reload records, implemented via javascript instead
     # search params
     # query={
     #       "query": {
