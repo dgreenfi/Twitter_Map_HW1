@@ -35,8 +35,12 @@ def _callsearch(query):
         verify_certs=True,
         connection_class=RequestsHttpConnection
     )
-
-    f=es.search(index='savedtweets',q='text:'+query,size=500)
+    msort={
+      "timestamp_ms": {
+        "order": "desc"
+      }
+    }
+    f=es.search(index='savedtweets',q='text:'+query,size=500,sort=msort)
     locs=[]
     #return locations in javascript form
     for i,record in enumerate(f['hits']['hits']):
@@ -82,8 +86,13 @@ def search():
     #       }
     #     }
 
+    msort={
+      "timestamp_ms": {
+        "order": "desc"
+      }
+    }
 
-    f=es.search(index='savedtweets',body=query)
+    f=es.search(index='savedtweets',q=searchq,sort=msort)
     return jsonify(f['hits'])
 
 @application.errorhandler(500)
