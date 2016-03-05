@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+</style>
+<body>
+<form id='termbox' name='term' action='' method='get'>
+<select id='term' name='query' onchange='this.form.submit()' >
+  <option>LOL</option>
+  <option>Ha</option>
+  <option>Warm</option>
+  <option>Sunny</option>
+  <option>Sun</option>
+</select>
+<noscript><input type="submit" name='query' value="Submit"></noscript>
+</form>
+  You searched for {{ q }} 
+  <div id="map"></div>
+    <script>
+      var map;
+      //variables for holding
+      var markers=[];
+      var test=[];
+      function initMap() {
+          var myLatLng = {lat: 40.763, lng: -74.044};
+          var map = new google.maps.Map(document.getElementById('map'), {
+              zoom: 4,
+              center: myLatLng
+          });
+          // function to only show tweets within 1000 miles
+          myListener = google.maps.event.addListener(map, 'click', function(event) {
+            clearMarkers(null);
+            setMapOnRange(map,event.latLng,1000);
+
+          });
+
+          var tweets = {{ tweet_array|tojson }};
+          var image = {
+              url: 'https://s3.amazonaws.com/dg2815/Lol-face.gif',
+              // This marker is 20 pixels wide by 32 pixels high.
+              size: new google.maps.Size(20, 32),
+              // The origin for this image is (0, 0).
+              origin: new google.maps.Point(0, 0),
+              // The anchor for this image is the base of the flagpole at (0, 32).
+              anchor: new google.maps.Point(0, 32)
+          };
+          // Shapes define the clickable region of the icon. The type defines an HTML
+          // <area> element 'poly' which traces out a polygon as a series of X,Y points.
+          // The final coordinate closes the poly by connecting to the first coordinate.
+          var shape = {
+              coords: [1, 1, 1, 20, 18, 20, 18, 1],
+              type: 'poly'
+          };
+
+          for (var i = 0; i < tweets.length; i++) {
+              var tweet = tweets[i];
+              var marker = new google.maps.Marker({
+                  position: {lat: tweet[1], lng: tweet[2]},
+                  map: map,
+                  icon: image,
+                  shape: shape,
+                  title: '<b>'+tweet[0]+'</b>'+':'+tweet[4],
+                  zIndex: tweet[3]
+              });
+              var contentString = '<div id="content">' +
+                      '<div id="siteNotice">' +
+                      '</div>' +
+                      '<h1 id="firstHeading" class="firstHeading">Tweet</h1>' +
+                      '<div id="bodyContent">' +
+                      '<p><b>Tweet</b>Placeholder for the Tweet body</p>' +
+                      '</div>' +
+                      '</div>';
+
+              var infowindow = new google.maps.InfoWindow({
+                  content: contentString,
+                  position: {lat: tweet[1], lng: tweet[2]},
+              });
+              google.maps.event.addListener(marker, 'click', function() {
+              infowindow.setContent(this.title)
+              infowindow.open(map, this);
+              });
+              //add to an array
+              markers.push(marker);
+
+            };
+        }
+        function setMapOnAll(map) {
+            for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(map);
+            }
+        }
+        function setMapOnRange(map,clickpoint,thresh) {
+            for (var i = 0; i < markers.length; i++) {
+
+                dist=distance(clickpoint.lat(),clickpoint.lng(),markers[i].position.lat(),markers[i].position.lng(),"M")
+
+                if (dist < thresh){
+                    markers[i].setMap(map);
+                };
+            }
+
+        }
+        function clearMarkers() {
+        setMapOnAll(null);
+        }
+        //calculate discance
+        function distance(lat1, lon1, lat2, lon2, unit) {
+
+            var radlat1 = Math.PI * lat1/180
+            var radlat2 = Math.PI * lat2/180
+            var theta = lon1-lon2
+            var radtheta = Math.PI * theta/180
+            var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+            dist = Math.acos(dist)
+            dist = dist * 180/Math.PI
+            dist = dist * 60 * 1.1515
+            if (unit=="K") { dist = dist * 1.609344 }
+            if (unit=="N") { dist = dist * 0.8684 }
+            //window.alert(dist);
+	return dist
+        }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCl4eZEnTIa4efm8jSsWARkdBpJ67dEJaU&signed_in=true&callback=initMap">
+    </script>
+
+</body>
+</html>
